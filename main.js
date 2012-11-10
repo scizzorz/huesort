@@ -45,7 +45,7 @@ function Surface() {
 			// Make a new random color along the color wheel
 			var hue=huesLeft.splice(Math.floor(Math.random()*huesLeft.length),1);
 			var color=new HSL(hue,1,0.5);
-			huesSorted.push(hue);
+			huesSorted.push(hue[0]);
 
 			// Make a new particle
 			var e=new Bar(this,color,this.canvas.width/hues);
@@ -60,7 +60,11 @@ function Surface() {
 			this.elements.push(e);
 		}
 
-
+		/* why can't I get the iteration count of a quicksort :(
+		console.log(huesSorted);
+		console.log(quicksort(huesSorted));
+		console.log(huesSorted);
+		*/
 
 		// Start the engine
 		this.step();
@@ -173,9 +177,10 @@ Bar.prototype.mousePress=function() {
 
 // PARTICLE:mouseRelease | Called when the mouse releases the object
 Bar.prototype.mouseRelease=function() {
-	this.surface.score++;
 	this.surface.mouseDraw=null;
 	this.dragging=false;
+
+	var swapped=false;
 
 	// Loop through the elements
 	for(var i=0;i<this.surface.elements.length;i++) {
@@ -188,7 +193,14 @@ Bar.prototype.mouseRelease=function() {
 		if(o && o.hitTest && o.hitTest(this.surface.mx,this.surface.my)) {
 			this.x=o.x;
 			o.x=this.ix;
+			swapped=true;
 		}
+	}
+	
+	if(!swapped) {
+		this.x=this.ix;
+	} else {
+		this.surface.score++;
 	}
 }
 
