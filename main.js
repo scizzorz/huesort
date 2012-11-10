@@ -37,15 +37,15 @@ function Surface() {
 		// Fly through color wheel!
 		var hues=10;
 		var huesLeft=[];
-		var huesSorted=[];
+		this.huesSorted=[];
 		for(var a=0;a<hues;a++)
-			huesLeft[a]=a/hues*360;
+			huesLeft[a]=Math.round(a/hues*360);
 
 		for(var a=0;a<hues;a++) {
 			// Make a new random color along the color wheel
-			var hue=huesLeft.splice(Math.floor(Math.random()*huesLeft.length),1);
+			var hue=huesLeft.splice(Math.floor(Math.random()*huesLeft.length),1)[0];
 			var color=new HSL(hue,1,0.5);
-			huesSorted.push(hue[0]);
+			this.huesSorted.push(hue);
 
 			// Make a new particle
 			var e=new Bar(this,color,this.canvas.width/hues);
@@ -60,11 +60,7 @@ function Surface() {
 			this.elements.push(e);
 		}
 
-		/* why can't I get the iteration count of a quicksort :(
-		console.log(huesSorted);
-		console.log(quicksort(huesSorted));
-		console.log(huesSorted);
-		*/
+		this.minScore=quicksort(this.huesSorted);
 
 		// Start the engine
 		this.step();
@@ -94,8 +90,13 @@ Surface.prototype.step=function() {
 	// Draw the dragged element if it exists; this is for depth reasons
 	if(this.mouseDraw && this.mouseDraw.draw) this.mouseDraw.draw();
 
+	//this.score_txt.innerHTML=this.score+" / "+this.minScore;
 	this.score_txt.innerHTML=this.score;
 
+	if(this.winner) {
+		alert("You win!");
+		return;
+	}
 	// Set a timeout to call this again in 10ms (pretty much whatever the fastest available interval is)
 	setTimeout("surface.step()",10);
 }
@@ -191,16 +192,24 @@ Bar.prototype.mouseRelease=function() {
 
 		// If it's a thing, has a hitTest, and is hitTesting...
 		if(o && o.hitTest && o.hitTest(this.surface.mx,this.surface.my)) {
-			this.x=o.x;
-			o.x=this.ix;
+			var tmp=this.color;
+			this.color=o.color;
+			o.color=tmp;
 			swapped=true;
+			break;
 		}
 	}
 	
-	if(!swapped) {
-		this.x=this.ix;
-	} else {
+	this.x=this.ix;
+	if(swapped) {
 		this.surface.score++;
+		var correct=true;
+		for(var a=0;a<this.surface.elements.length;a++) {
+			if(this.surface.elements[a].color.h!=this.surface.huesSorted[a]) {
+				correct=false;
+			}
+		}
+		if(correct) this.surface.winner=true;
 	}
 }
 
