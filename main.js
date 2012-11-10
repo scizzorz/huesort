@@ -35,23 +35,29 @@ function Surface() {
 		this.elements=[];
 		
 		// Fly through color wheel!
-		var hues=10;
+		var hues=200;
+		var rows=2;
+		var columns=Math.ceil(hues/rows);
+
 		var huesLeft=[];
 		this.huesSorted=[];
 		for(var a=0;a<hues;a++)
 			huesLeft[a]=Math.round(a/hues*360);
 
 		for(var a=0;a<hues;a++) {
+			var r=Math.floor(a/columns);
+			var c=a % columns;
+
 			// Make a new random color along the color wheel
 			var hue=huesLeft.splice(Math.floor(Math.random()*huesLeft.length),1)[0];
 			var color=new HSL(hue,1,0.5);
 			this.huesSorted.push(hue);
 
 			// Make a new particle
-			var e=new Bar(this,color,this.canvas.width/hues);
+			var e=new Bar(this,color,this.canvas.width/columns,this.canvas.height/rows);
 
 			// Set its initial position to the cursor and start dragging immediately
-			e.setPos(this.canvas.width*a/hues,0);
+			e.setPos(this.canvas.width*c/columns,this.canvas.height*r/rows);
 
 			// Set its identity!
 			e.setID(a);
@@ -155,17 +161,18 @@ Element.prototype.setID=function(_id) {
 }
 
 // PARTICLE | More detailed element with actual functionality
-function Bar(_surface,_color,_width) {
+function Bar(_surface,_color,_width,_height) {
 	this.surface=_surface;
 	this.color=_color;
 	this.width=_width;
+	this.height=_height;
 	this.dragging=false;
 }
 Bar.prototype=new Element(); // inherit from Element
 
 // PARTICLE:hitTest | Check if a point is in contact with the object
 Bar.prototype.hitTest=function(_x,_y) {
-	return (_x>this.x && _x<this.x+this.width && _y>this.y && _y<this.y+this.surface.height);
+	return (_x>this.x && _x<this.x+this.width && _y>this.y && _y<this.y+this.height);
 }
 
 // PARTICLE:mousePress | Called when the mouse presses the object
@@ -173,7 +180,9 @@ Bar.prototype.mousePress=function() {
 	this.surface.mouseDraw=this;
 	this.dragging=true;
 	this.dragX=this.surface.mx-this.x;
+	this.dragY=this.surface.my-this.y;
 	this.ix=this.x;
+	this.iy=this.y;
 }
 
 // PARTICLE:mouseRelease | Called when the mouse releases the object
@@ -201,6 +210,7 @@ Bar.prototype.mouseRelease=function() {
 	}
 	
 	this.x=this.ix;
+	this.y=this.iy;
 	if(swapped) {
 		this.surface.score++;
 		var correct=true;
@@ -218,18 +228,21 @@ Bar.prototype.step=function() {
 	// If it's being dragged by the cursor...
 	if(this.dragging) {
 		this.x=this.surface.mx-this.dragX;
+		this.y=this.surface.my-this.dragY;
 	}
 	
 	// Boundary checks
 	if(this.x<0) this.x=0;
 	if(this.x>this.surface.width-this.width) this.x=this.surface.width-this.width;
+	if(this.y<0) this.y=0;
+	if(this.y>this.surface.height-this.height) this.y=this.surface.height-this.height;
 }
 
 // PARTICLE:ELEMENT:draw | Draws the particle
 Bar.prototype.draw=function() {
 	this.surface.context.beginPath();
 	this.surface.context.fillStyle=this.color.v;
-	this.surface.context.fillRect(this.x,this.y,this.width,this.surface.height);
+	this.surface.context.fillRect(this.x,this.y,this.width,this.height);
 }
 
 // jQuery to set everything up on page load
