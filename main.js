@@ -35,7 +35,7 @@ function Surface() {
 		this.elements=[];
 		
 		// Fly through color wheel!
-		var hues=200;
+		var hues=10;
 		var rows=2;
 		var columns=Math.ceil(hues/rows);
 
@@ -67,6 +67,31 @@ function Surface() {
 		}
 
 		this.minScore=quicksort(this.huesSorted);
+		
+		// give first and last so they don't have to hunt...
+		var start=this.elements[0];
+		var end=this.elements[this.elements.length-1];
+		for(var a=1;a<this.elements.length;a++) {
+			var e=this.elements[a];
+			if(e.color.h==0) {
+				var tmp=start.color;
+				start.color=e.color;
+				e.color=tmp;
+				console.log("Swapping elements 0 and "+a);
+			}
+			if(e.color.h==this.huesSorted[this.huesSorted.length-1]) {
+				var tmp=end.color;
+				end.color=e.color;
+				e.color=tmp;
+				console.log("Swapping elements L and "+a);
+			}
+		}
+		
+
+
+		// lock the first and last in place
+		start.hitTest=undefined;
+		end.hitTest=undefined;
 
 		// Start the engine
 		this.step();
@@ -160,7 +185,7 @@ Element.prototype.setID=function(_id) {
 	this.id=_id;
 }
 
-// PARTICLE | More detailed element with actual functionality
+// BAR | More detailed element with actual functionality
 function Bar(_surface,_color,_width,_height) {
 	this.surface=_surface;
 	this.color=_color;
@@ -170,12 +195,12 @@ function Bar(_surface,_color,_width,_height) {
 }
 Bar.prototype=new Element(); // inherit from Element
 
-// PARTICLE:hitTest | Check if a point is in contact with the object
+// BAR:hitTest | Check if a point is in contact with the object
 Bar.prototype.hitTest=function(_x,_y) {
 	return (_x>this.x && _x<this.x+this.width && _y>this.y && _y<this.y+this.height);
 }
 
-// PARTICLE:mousePress | Called when the mouse presses the object
+// BAR:mousePress | Called when the mouse presses the object
 Bar.prototype.mousePress=function() {
 	this.surface.mouseDraw=this;
 	this.dragging=true;
@@ -185,7 +210,7 @@ Bar.prototype.mousePress=function() {
 	this.iy=this.y;
 }
 
-// PARTICLE:mouseRelease | Called when the mouse releases the object
+// BAR:mouseRelease | Called when the mouse releases the object
 Bar.prototype.mouseRelease=function() {
 	this.surface.mouseDraw=null;
 	this.dragging=false;
@@ -223,7 +248,7 @@ Bar.prototype.mouseRelease=function() {
 	}
 }
 
-// PARTICLE:ELEMENT:step | Updates the position and acceleration every frame
+// BAR:ELEMENT:step | Updates the position and acceleration every frame
 Bar.prototype.step=function() {
 	// If it's being dragged by the cursor...
 	if(this.dragging) {
@@ -238,7 +263,7 @@ Bar.prototype.step=function() {
 	if(this.y>this.surface.height-this.height) this.y=this.surface.height-this.height;
 }
 
-// PARTICLE:ELEMENT:draw | Draws the particle
+// BAR:ELEMENT:draw | Draws the particle
 Bar.prototype.draw=function() {
 	this.surface.context.beginPath();
 	this.surface.context.fillStyle=this.color.v;
