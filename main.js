@@ -57,7 +57,11 @@ function Surface() {
 			var e=new Bar(this,color,this.canvas.width/columns,this.canvas.height/rows);
 
 			// Set its initial position to the cursor and start dragging immediately
-			e.setPos(this.canvas.width*c/columns,this.canvas.height*r/rows);
+			if(r % 2) {
+				e.setPos(this.canvas.width-this.canvas.width*(c+1)/columns,this.canvas.height*r/rows);
+			} else {
+				e.setPos(this.canvas.width*c/columns,this.canvas.height*r/rows);
+			}
 
 			// Set its identity!
 			e.setID(a);
