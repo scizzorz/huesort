@@ -35,14 +35,16 @@ function Surface() {
 		this.elements=[];
 		
 		// Fly through color wheel!
-		var hues=10;
+		var range=[0,30];
+		var gap=range[1]-range[0];
+		var hues=Math.min(60,gap);
 		var rows=2;
 		var columns=Math.ceil(hues/rows);
 
 		var huesLeft=[];
 		this.huesSorted=[];
 		for(var a=0;a<hues;a++)
-			huesLeft[a]=Math.round(a/hues*360);
+			huesLeft[a]=Math.round(a/hues*gap+range[0]);
 
 		for(var a=0;a<hues;a++) {
 			var r=Math.floor(a/columns);
