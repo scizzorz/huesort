@@ -35,10 +35,17 @@ function Surface() {
 		this.elements=[];
 		
 		// Fly through color wheel!
-		var hues=40;
+		var hues=10;
+		var huesLeft=[];
+		var huesSorted=[];
+		for(var a=0;a<hues;a++)
+			huesLeft[a]=a/hues*360;
+
 		for(var a=0;a<hues;a++) {
 			// Make a new random color along the color wheel
-			var color=new HSL(a/hues * 360,1,0.5);
+			var hue=huesLeft.splice(Math.floor(Math.random()*huesLeft.length),1);
+			var color=new HSL(hue,1,0.5);
+			huesSorted.push(hue);
 
 			// Make a new particle
 			var e=new Bar(this,color,this.canvas.width/hues);
@@ -46,9 +53,14 @@ function Surface() {
 			// Set its initial position to the cursor and start dragging immediately
 			e.setPos(this.canvas.width*a/hues,0);
 
+			// Set its identity!
+			e.setID(a);
+
 			// Push it into the elements array
 			this.elements.push(e);
 		}
+
+
 
 		// Start the engine
 		this.step();
@@ -74,6 +86,9 @@ Surface.prototype.step=function() {
 			o.draw();
 		}
 	}
+
+	// Draw the dragged element if it exists; this is for depth reasons
+	if(this.mouseDraw && this.mouseDraw.draw) this.mouseDraw.draw();
 
 	this.score_txt.innerHTML=this.score;
 
@@ -123,10 +138,15 @@ function Element(surface) {}
 Element.prototype.draw=function() {} // Draws the element
 Element.prototype.step=function() {} // Called every frame before drawing
 
-// ELEMENT:setPos | Sets the x and y positions of this elements
+// ELEMENT:setPos | Sets the x and y positions of this element
 Element.prototype.setPos=function(x,y) {
 	this.x=x;
 	this.y=y;
+}
+
+// ELEMENT:setID | Sets the unique ID of this element
+Element.prototype.setID=function(_id) {
+	this.id=_id;
 }
 
 // PARTICLE | More detailed element with actual functionality
@@ -145,6 +165,7 @@ Bar.prototype.hitTest=function(_x,_y) {
 
 // PARTICLE:mousePress | Called when the mouse presses the object
 Bar.prototype.mousePress=function() {
+	this.surface.mouseDraw=this;
 	this.dragging=true;
 	this.dragX=this.surface.mx-this.x;
 	this.ix=this.x;
@@ -152,8 +173,23 @@ Bar.prototype.mousePress=function() {
 
 // PARTICLE:mouseRelease | Called when the mouse releases the object
 Bar.prototype.mouseRelease=function() {
+	this.surface.score++;
+	this.surface.mouseDraw=null;
 	this.dragging=false;
 
+	// Loop through the elements
+	for(var i=0;i<this.surface.elements.length;i++) {
+		var o=this.surface.elements[i];
+
+		// If it's this object, continue!
+		if(o.id==this.id) continue;
+
+		// If it's a thing, has a hitTest, and is hitTesting...
+		if(o && o.hitTest && o.hitTest(this.surface.mx,this.surface.my)) {
+			this.x=o.x;
+			o.x=this.ix;
+		}
+	}
 }
 
 // PARTICLE:ELEMENT:step | Updates the position and acceleration every frame
