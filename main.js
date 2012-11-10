@@ -15,8 +15,8 @@ function HSL(h,s,l) {
 function Surface() {
 	// Grabs the canvas element and the text fields
 	this.canvas=document.getElementById("surface");
-	this.left_txt = document.getElementById("left");
-	this.right_txt = document.getElementById("right");
+	this.score=0;
+	this.score_txt = document.getElementById("score");
 
 	// If the browser supports it, let's hit that up!
 	if(this.canvas.getContext) {
@@ -42,11 +42,9 @@ function Surface() {
 
 			// Make a new particle
 			var e=new Bar(this,color,this.canvas.width/hues);
-			console.log(color.v);
 
 			// Set its initial position to the cursor and start dragging immediately
 			e.setPos(this.canvas.width*a/hues,0);
-			console.log(e.x+", "+e.y);
 
 			// Push it into the elements array
 			this.elements.push(e);
@@ -65,9 +63,6 @@ Surface.prototype.step=function() {
 	// Clear the whole drawing rectangle
 	this.context.clearRect(0,0,this.width,this.height);
 
-	this.left=0;
-	this.right=0;
-	
 	// Loop through the elements
 	for(var i=0;i<this.elements.length;i++) {
 		var o=this.elements[i];
@@ -77,13 +72,10 @@ Surface.prototype.step=function() {
 			// Step and draw it
 			o.step();
 			o.draw();
-			if(o.x < this.width/2) this.left++;
-			else this.right++;
 		}
 	}
 
-	this.left_txt.innerHTML=this.left;
-	this.right_txt.innerHTML=this.right;
+	this.score_txt.innerHTML=this.score;
 
 	// Set a timeout to call this again in 10ms (pretty much whatever the fastest available interval is)
 	setTimeout("surface.step()",10);
@@ -91,8 +83,6 @@ Surface.prototype.step=function() {
 
 // SURFACE:moused | Called when the a mouse button is pressed
 Surface.prototype.moused=function(e) {
-	var clicked=false;
-
 	// Loop through the elements
 	for(var i=0;i<this.elements.length;i++) {
 		var o=this.elements[i];
@@ -101,7 +91,6 @@ Surface.prototype.moused=function(e) {
 		if(o && o.hitTest && o.mousePress && o.hitTest(this.mx,this.my)) {
 			// Press the cursor on it
 			o.mousePress();
-
 			// and don't look for a new ball, either
 			break;
 		}
@@ -151,28 +140,31 @@ Bar.prototype=new Element(); // inherit from Element
 
 // PARTICLE:hitTest | Check if a point is in contact with the object
 Bar.prototype.hitTest=function(_x,_y) {
-	return (Math.dist(_x-this.x,_y-this.y)<=this.width);
+	return (_x>this.x && _x<this.x+this.width && _y>this.y && _y<this.y+this.surface.height);
 }
 
 // PARTICLE:mousePress | Called when the mouse presses the object
 Bar.prototype.mousePress=function() {
 	this.dragging=true;
+	this.dragX=this.surface.mx-this.x;
+	this.ix=this.x;
 }
 
 // PARTICLE:mouseRelease | Called when the mouse releases the object
 Bar.prototype.mouseRelease=function() {
 	this.dragging=false;
+
 }
 
 // PARTICLE:ELEMENT:step | Updates the position and acceleration every frame
 Bar.prototype.step=function() {
 	// If it's being dragged by the cursor...
 	if(this.dragging) {
-		this.x=this.surface.mx;
+		this.x=this.surface.mx-this.dragX;
 	}
 	
 	// Boundary checks
-	if(this.x<this.width) this.x=this.width;
+	if(this.x<0) this.x=0;
 	if(this.x>this.surface.width-this.width) this.x=this.surface.width-this.width;
 }
 
