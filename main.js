@@ -16,6 +16,7 @@ function Surface() {
 	// Grabs the canvas element and the text fields
 	this.canvas=document.getElementById("surface");
 	this.score=0;
+	this.wrongScore=-1;
 	this.score_txt = document.getElementById("score");
 
 	// If the browser supports it, let's hit that up!
@@ -35,9 +36,9 @@ function Surface() {
 		this.elements=[];
 		
 		// Fly through color wheel!
-		var range=[0,30];
+		var range=[0,360];
 		var gap=range[1]-range[0];
-		var hues=Math.min(60,gap);
+		var hues=Math.min(100,gap);
 		var rows=2;
 		var columns=Math.ceil(hues/rows);
 
@@ -77,14 +78,18 @@ function Surface() {
 		// give first and last so they don't have to hunt...
 		var start=this.elements[0];
 		var end=this.elements[this.elements.length-1];
-		for(var a=1;a<this.elements.length;a++) {
+		for(var a=0;a<this.elements.length;a++) {
 			var e=this.elements[a];
-			if(e.color.h==0) {
+			if(e.color.h==this.huesSorted[0]) {
 				var tmp=start.color;
 				start.color=e.color;
 				e.color=tmp;
 				console.log("Swapping elements 0 and "+a);
+				break;
 			}
+		}
+		for(var a=0;a<this.elements.length;a++) {
+			var e=this.elements[a];
 			if(e.color.h==this.huesSorted[this.huesSorted.length-1]) {
 				var tmp=end.color;
 				end.color=e.color;
@@ -100,6 +105,7 @@ function Surface() {
 		end.hitTest=undefined;
 
 		// Start the engine
+		this.checkWin();
 		this.step();
 	} else {
 		// BUMMER
@@ -128,15 +134,25 @@ Surface.prototype.step=function() {
 	if(this.mouseDraw && this.mouseDraw.draw) this.mouseDraw.draw();
 
 	//this.score_txt.innerHTML=this.score+" / "+this.minScore;
-	this.score_txt.innerHTML=this.score;
+	this.score_txt.innerHTML=this.score+" / "+this.wrongScore;
 
-	if(this.winner) {
+	if(this.wrongScore==0) {
 		alert("You win!");
 		return;
 	}
 	// Set a timeout to call this again in 10ms (pretty much whatever the fastest available interval is)
 	setTimeout("surface.step()",10);
 }
+
+Surface.prototype.checkWin=function() {
+	this.wrongScore=0;
+	for(var a=0;a<this.elements.length;a++) {
+		if(this.elements[a].color.h!=this.huesSorted[a]) {
+			this.wrongScore++;
+		}
+	}
+}
+
 
 // SURFACE:moused | Called when the a mouse button is pressed
 Surface.prototype.moused=function(e) {
@@ -244,13 +260,7 @@ Bar.prototype.mouseRelease=function() {
 	this.y=this.iy;
 	if(swapped) {
 		this.surface.score++;
-		var correct=true;
-		for(var a=0;a<this.surface.elements.length;a++) {
-			if(this.surface.elements[a].color.h!=this.surface.huesSorted[a]) {
-				correct=false;
-			}
-		}
-		if(correct) this.surface.winner=true;
+		this.surface.checkWin();
 	}
 }
 
@@ -273,7 +283,7 @@ Bar.prototype.step=function() {
 Bar.prototype.draw=function() {
 	this.surface.context.beginPath();
 	this.surface.context.fillStyle=this.color.v;
-	this.surface.context.fillRect(this.x,this.y,this.width,this.height);
+	this.surface.context.fillRect(this.x+2,this.y+2,this.width-4,this.height-4);
 }
 
 // jQuery to set everything up on page load
