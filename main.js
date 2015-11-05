@@ -34,12 +34,12 @@ function Surface() {
 
 		// Number of particles and the base array of elements
 		this.elements=[];
-		
+
 		// Fly through color wheel!
 		var range=[0,360];
 		var gap=range[1]-range[0];
-		var hues=Math.min(100,gap);
-		var rows=2;
+		var hues=Math.min(150,gap);
+		var rows=3;
 		var columns=Math.ceil(hues/rows);
 
 		var huesLeft=[];
@@ -74,7 +74,7 @@ function Surface() {
 		}
 
 		this.minScore=quicksort(this.huesSorted);
-		
+
 		// give first and last so they don't have to hunt...
 		var start=this.elements[0];
 		var end=this.elements[this.elements.length-1];
@@ -97,7 +97,7 @@ function Surface() {
 				console.log("Swapping elements L and "+a);
 			}
 		}
-		
+
 
 
 		// lock the first and last in place
@@ -147,7 +147,8 @@ Surface.prototype.step=function() {
 Surface.prototype.checkWin=function() {
 	this.wrongScore=0;
 	for(var a=0;a<this.elements.length;a++) {
-		if(this.elements[a].color.h!=this.huesSorted[a]) {
+		this.elements[a].correct = (this.elements[a].color.h == this.huesSorted[a]);
+		if(!this.elements[a].correct) {
 			this.wrongScore++;
 		}
 	}
@@ -224,12 +225,14 @@ Bar.prototype.hitTest=function(_x,_y) {
 
 // BAR:mousePress | Called when the mouse presses the object
 Bar.prototype.mousePress=function() {
-	this.surface.mouseDraw=this;
-	this.dragging=true;
-	this.dragX=this.surface.mx-this.x;
-	this.dragY=this.surface.my-this.y;
-	this.ix=this.x;
-	this.iy=this.y;
+	if(!this.correct) {
+		this.surface.mouseDraw=this;
+		this.dragging=true;
+		this.dragX=this.surface.mx-this.x;
+		this.dragY=this.surface.my-this.y;
+		this.ix=this.x;
+		this.iy=this.y;
+	}
 }
 
 // BAR:mouseRelease | Called when the mouse releases the object
@@ -246,6 +249,9 @@ Bar.prototype.mouseRelease=function() {
 		// If it's this object, continue!
 		if(o.id==this.id) continue;
 
+		// Don't swap with correct things!
+		if(this.correct || o.correct) continue;
+
 		// If it's a thing, has a hitTest, and is hitTesting...
 		if(o && o.hitTest && o.hitTest(this.surface.mx,this.surface.my)) {
 			var tmp=this.color;
@@ -255,7 +261,7 @@ Bar.prototype.mouseRelease=function() {
 			break;
 		}
 	}
-	
+
 	this.x=this.ix;
 	this.y=this.iy;
 	if(swapped) {
@@ -271,7 +277,7 @@ Bar.prototype.step=function() {
 		this.x=this.surface.mx-this.dragX;
 		this.y=this.surface.my-this.dragY;
 	}
-	
+
 	// Boundary checks
 	if(this.x<0) this.x=0;
 	if(this.x>this.surface.width-this.width) this.x=this.surface.width-this.width;
@@ -284,6 +290,11 @@ Bar.prototype.draw=function() {
 	this.surface.context.beginPath();
 	this.surface.context.fillStyle=this.color.v;
 	this.surface.context.fillRect(this.x+2,this.y+2,this.width-4,this.height-4);
+	if(this.correct) {
+		this.surface.context.strokeStyle = "#FFFFFF";
+		this.surface.context.lineWidth = 2;
+		this.surface.context.strokeRect(this.x+2, this.y+2, this.width-4, this.height-4);
+	}
 }
 
 // jQuery to set everything up on page load
